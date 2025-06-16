@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUtils } from "@/lib/image-utils";
 
 interface CreateArticleModalProps {
   isOpen: boolean;
@@ -29,6 +30,8 @@ export function CreateArticleModal({
   const [category, setCategory] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [keywords, setKeywords] = useState("");
+  const [imageFileName, setImageFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleContinue = () => {
     if (!title.trim() || !author.trim() || !category) {
@@ -51,6 +54,30 @@ export function CreateArticleModal({
     setCategory("");
     setCoverImage("");
     setKeywords("");
+    setImageFileName("");
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      ImageUtils.validateImageFile(file);
+      const base64 = await ImageUtils.convertToBase64(file);
+      setCoverImage(base64);
+      setImageFileName(file.name);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to upload image");
+    }
+
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const openImageUpload = () => {
+    fileInputRef.current?.click();
   };
 
   if (!isOpen) return null;
@@ -142,21 +169,52 @@ export function CreateArticleModal({
             </div>
           </div>
 
-          {/* Cover Image URL */}
+          {/* Cover Image */}
           <div className="space-y-2">
             <Label
               htmlFor="coverImage"
               className="text-sm font-medium text-gray-700"
             >
-              Cover Image URL
+              Cover Image
             </Label>
-            <Input
-              id="coverImage"
-              placeholder="https://example.com/image.jpg"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              className="w-full"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+              <div>
+                <Input
+                  id="coverImage"
+                  placeholder="https://example.com/image.jpg"
+                  value={coverImage.startsWith('data:image') ? '' : coverImage}
+                  onChange={(e) => {
+                    setCoverImage(e.target.value);
+                    setImageFileName('');
+                  }}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Enter image URL or upload from your computer</p>
+              </div>
+              <div className="flex items-end gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={openImageUpload}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Image
+                </Button>
+                {imageFileName && (
+                  <p className="text-xs text-muted-foreground self-center truncate max-w-[150px]">
+                    {imageFileName}
+                  </p>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Keywords */}

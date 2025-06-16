@@ -91,13 +91,7 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>
-              Default password:{" "}
-              <code className="bg-muted px-1 rounded">admin123</code>
-            </p>
-            <p className="text-xs mt-1">Change this in production!</p>
-          </div>
+          
         </CardContent>
       </Card>
     </div>
